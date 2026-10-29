@@ -122,8 +122,10 @@ nav button.on{color:var(--silver);font-weight:700}
 nav button{font-size:12.5px;padding:10px 2px}
 .day{align-items:stretch;gap:2px;padding:4px 2px;min-height:84px;background:none;overflow:visible;text-align:center}
 .dn{font-size:13px}
-.eb{display:block;height:14px;margin:0 -3px;font-size:10px;line-height:14px;color:#1d2038;text-align:left;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eb{display:block;height:14px;margin:0 -5px;font-size:10px;line-height:14px;color:#1d2038;text-align:left;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .eb.nil{background:none}
+.eb.s{border-radius:4px 0 0 4px}.eb.e{border-radius:0 4px 4px 0}.eb.s.e{border-radius:4px}
+.eb.lb{overflow:visible;position:relative;z-index:2;text-overflow:clip}
 .tm{font-size:10.5px;color:var(--dim);line-height:1.25}
 .tm.seen{color:var(--ok);font-weight:700}.tm.hit{color:var(--j);font-weight:700}
 .sess .seen{color:var(--ok)}
@@ -610,8 +612,10 @@ function renderCal() {
     const bars = Array.from({ length: ev.length ? Math.max(...ev.map(e => e.i)) + 1 : 0 }, (_, i) => {
       const e = ev.find(x => x.i === i);
       if (!e) return `<span class="eb nil"></span>`;
-      const show = date === e.start || d === 1 || new Date(date + "T00:00").getDay() === 0;
-      return `<span class="eb" style="background:${e.color || "var(--rose)"}">${show ? esc(e.title) : ""}</span>`;
+      const dow = new Date(date + "T00:00").getDay(), end = e.end || e.start;
+      const show = date === e.start || d === 1 || dow === 0;
+      const cls = `${date === e.start || dow === 0 ? "s" : ""} ${date === end || dow === 6 ? "e" : ""} ${show && dow !== 6 ? "lb" : ""}`;
+      return `<span class="eb ${cls}" style="background:${e.color || "var(--rose)"}">${show ? esc(e.title) : ""}</span>`;
     }).join("");
     const shown = dayTimes(date).filter(t => !filtOn() || matches(castOf(date, t)));
     const times = shown.map(t => {
@@ -867,6 +871,8 @@ function fillBoards(rec) {
 /* ===== 11. 설정: 다크모드, 백업/복원, 홈 화면 추가 ===== */
 let deferred = null;
 addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; renderSettings(); });
+/* 최근 업데이트 날짜: 수정할 때마다 이 날짜가 바뀌어요 */
+const APP_UPDATED = "2026.10.29";
 function renderSettings() {
   const t = meta.settings.theme;
   $("setBox").innerHTML = `<h3>화면 모드</h3>` + [["auto", "자동"], ["light", "라이트"], ["dark", "다크"]].map(([v, l]) =>
@@ -875,7 +881,8 @@ function renderSettings() {
     <div class="row" style="margin-top:10px"><button type="button" data-a="exp">JSON 내보내기</button><button type="button" data-a="imp">JSON 가져오기</button></div>
     <h3>홈 화면에 추가</h3><p class="meta">아이폰은 공유 버튼 → "홈 화면에 추가", 안드로이드는 브라우저 메뉴 → "홈 화면에 추가"를 고르면 앱처럼 열려요.</p>
     ${deferred ? `<button type="button" class="more" data-a="pwa">홈 화면에 추가</button>` : ""}
-    <h3>이벤트</h3><p class="meta">등록된 이벤트 ${EVENTS.length}개 · 캘린더에 색 띠로 표시돼요.</p>`;
+    <h3>이벤트</h3><p class="meta">등록된 이벤트 ${EVENTS.length}개 · 캘린더에 색 띠로 표시돼요.</p>
+    <h3>앱 업데이트</h3><p class="meta">최근 업데이트 <b style="color:var(--silver)">${APP_UPDATED}</b></p>`;
 }
 async function exportData() {
   const text = JSON.stringify({ app: "v-ever-after", v: 3, records, meta }, null, 1), name = `v-ever-after-backup-${today()}.json`;
