@@ -147,14 +147,44 @@ details summary{cursor:pointer;color:var(--dim);font-size:14px;margin:12px 0 6px
 .chk{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--silver);margin:16px 0 0}
 .chk input{width:auto;margin:0}
 .day.sun .dn{color:var(--r)}.day.sat .dn{color:var(--dim)}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.add{position:static;box-shadow:none;padding:8px 16px;font-size:14px}
+.hc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.ht{font-size:14px;color:var(--dim);margin:0 0 10px;font-weight:700}
+.hc summary.ht{cursor:pointer;margin:0;list-style:none;display:flex;justify-content:space-between}
+.hc[open] summary.ht{margin-bottom:10px}
+.empt{text-align:center;color:var(--dim);padding:14px 0;font-size:14px}
+.empt i{display:block;font-style:normal;font-size:30px;margin-bottom:6px}
+.rrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}
+.rrow:last-child{border:0}
+.dchip{background:var(--night);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:12.5px;color:var(--dim);white-space:nowrap}
+.cn{flex:1;min-width:0}
+.st2{color:var(--j);font-size:13px;white-space:nowrap}
+.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cb{border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center;font-size:13px}
+.cnum{display:flex;justify-content:space-around;margin:8px 0 6px}
+.cnum small{display:block;color:var(--dim);font-size:11px}
+.cnum strong{font-size:22px;color:var(--dim)}.cnum .cur{color:var(--ok)}
+.cb>small,.dbl small{color:var(--dim);font-size:11.5px}
+.dbl{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin-top:8px;font-size:13px}
+.bd{padding:6px 0}.bdr{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:13px}
+.bdr .track{flex:1}.bdr .meta{margin:0;white-space:nowrap}
+.ms span{margin:0 1px}.ms .off{opacity:.3}
+.nbig{width:100%;padding:15px;border:0;border-radius:12px;background:var(--rose);color:#fff;font-weight:700;font-size:16px;margin:4px 0 8px}
+.bh{display:flex;justify-content:space-between;align-items:center;gap:8px}.ib{display:flex;gap:6px}
+.sq{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--night);color:var(--silver);font-size:13px;padding:0}
+.bl{display:flex;justify-content:space-between;margin:12px 0 6px;font-size:14px}.bl span{color:var(--dim);font-size:13px}
+.pbar{position:relative;height:12px;border-radius:6px;background:var(--lv0);overflow:hidden}
+.pbar>i:first-child{display:block;height:100%;background:var(--rose)}
+.tick{position:absolute;top:0;bottom:0;width:2px;background:var(--dim)}.tick.on{background:var(--j)}
+.ach{color:var(--j);font-size:13px;font-weight:700;margin:8px 0 10px}.ach.dim{color:var(--dim);font-weight:400}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>🩸 V Ever After</h1>
+  <div class="hd"><h1>🩸 V Ever After</h1><button class="add" id="addBtn">+ 기록</button></div>
   <p class="sub">관극 다이어리</p>
   <section id="tab-home" class="tab">
-  <p class="count">지금까지 <b id="count">0</b>회 관람</p>
   <div id="list"></div>
   </section>
   <section id="tab-cal" class="tab" hidden>
@@ -167,7 +197,6 @@ details summary{cursor:pointer;color:var(--dim);font-size:14px;margin:12px 0 6px
   <section id="tab-stats" class="tab" hidden><div id="statsBox"></div></section>
   <section id="tab-set" class="tab" hidden><div id="setBox"></div></section>
 </div>
-<button class="add" id="addBtn">+ 기록</button>
 <nav>
   <button type="button" data-tab="home" class="on">🏠 홈</button>
   <button type="button" data-tab="cal">📅 캘린더</button>
@@ -329,22 +358,45 @@ function formatWhen(date, time) {
 
 function render() {
   renderCal(); renderStats(); renderCoupon(); renderSettings();
-  // 최근 날짜가 위로 오도록 정렬
-  const sorted = [...records].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
-  $("count").textContent = sorted.length;
-  if (!sorted.length) {
-    $("list").innerHTML = `<div class="empty">아직 기록이 없어요.<br>아래 <b>+ 기록</b> 버튼으로 첫 관극을 남겨보세요.</div>`;
-    return;
-  }
-  $("list").innerHTML = sorted.map(r => `
-    <div class="card" data-id="${r.id}" tabindex="0">
-      <div class="when">${formatWhen(r.date, r.time)}</div>
-      <div class="chips">${Object.keys(ROLES).map(role =>
-        `<span class="chip ${ROLE_CLASS[role]}">${role} ${esc(r.cast[role])}</span>`).join("")}</div>
-      ${r.rating ? `<div class="cardstars" aria-label="별점 ${r.rating}점">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</div>` : ""}
-      <div class="meta">${r.tbd ? "예매 미확정" : seatText(r.seat)}${r.coupon ? " · " + esc(r.coupon) : ""}${r.price != null ? " · " + won(r.price) : ""}</div>
-      ${r.comment ? `<p class="comment">${esc(r.comment)}</p>` : ""}
-    </div>`).join("");
+  renderHome();
+}
+
+/* 홈: 다가오는 일정 → 쿠폰 현황 → 다관람 카드 현황 → 지나간 일정 */
+let pastAll = false; // 최근 관람은 10건만 보이고, 더 보기를 누르면 전부 보여요
+function renderHome() {
+  const d0 = new Date(), t = `${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())} ${pad(d0.getHours())}:${pad(d0.getMinutes())}`;
+  const key = r => r.date + " " + r.time, byId = id => records.find(r => r.id === id);
+  const upc = records.filter(r => key(r) > t).sort((a, b) => key(a).localeCompare(key(b)));
+  const past = records.filter(r => key(r) <= t).sort((a, b) => key(b).localeCompare(key(a)));
+  const shown = pastAll ? past : past.slice(0, 10);
+  const seatShort = r => r.tbd ? "예매 미확정" : r.seat ? `${r.seat.floor === "2층" ? "2층 " : ""}${r.seat.row}열 ${r.seat.num}번` : "좌석 미정";
+  const rowH = r => `<div class="rrow" data-id="${r.id}" tabindex="0"><span class="dchip">${r.date.slice(5)} ${r.time}</span>
+    <span class="cn">${Object.keys(ROLES).map(k => esc(r.cast[k])).join(" · ")}${r.rating ? `<span class="cardstars" style="margin:0 0 0 6px">${"★".repeat(r.rating)}</span>` : ""}</span>
+    <span class="st2" ${r.tbd ? 'style="color:var(--dim)"' : ""}>${seatShort(r)}</span></div>`;
+
+  // 쿠폰: 현재 = 이미 지난 회차까지 반영, 최종 = 예정된 회차의 자동 차감까지 반영
+  const cstat = k => {
+    const L = meta.coupons.filter(c => c.kind === k), sum = a => a.reduce((x, c) => x + c.qty, 0);
+    const inn = sum(L.filter(c => c.type !== "사용")), out = sum(L.filter(c => c.type === "사용"));
+    const pend = sum(L.filter(c => c.type === "사용" && c.rec && byId(c.rec) && key(byId(c.rec)) > t));
+    return { cur: inn - out + pend, fin: inn - out, inn, out };
+  };
+  const cbox = k => { const c = cstat(k);
+    return `<div class="cb"><b>${k}</b><div class="cnum"><div><small>현재</small><strong class="cur">${c.cur}</strong></div><div><small>최종</small><strong>${c.fin}</strong></div></div><small>적립 ${c.inn} · 사용 ${c.out}</small></div>`; };
+  const dbl = cstat("더블 적립권");
+
+  const icons = { 3: "🎟", 5: "📸", 7: "🎁" };
+  const stampCur = b => b.stamps.filter(x => { const r = x.rec && byId(x.rec); return r ? key(r) <= t : x.date <= t.slice(0, 10); }).reduce((a, x) => a + x.qty, 0);
+  const boards = meta.boards.map(b => { const tot = stampN(b);
+    return `<div class="bd"><b>${esc(b.name)}</b><div class="bdr"><span class="ms">[${BENEFITS.map(([n]) => `<span class="${tot >= n ? "" : "off"}">${icons[n] || "🎫"}</span>`).join("")}]</span>
+      <div class="track"><i style="width:${Math.min(tot, 7) / 7 * 100}%;background:var(--rose)"></i></div><span class="meta">현재:${stampCur(b)} / 예정:${tot}</span></div></div>`; }).join("");
+
+  $("list").innerHTML =
+    `<div class="hc">${upc.length ? `<p class="ht">📋 예정 일정</p>${upc.map(rowH).join("")}` : `<div class="empt"><i>✈</i>예매 확정된 일정이 없습니다</div>`}</div>
+    <div class="hc"><p class="ht">🎫 쿠폰 현황</p><div class="cg">${["40% 할인권", "50% 할인권", "증빙패스"].map(cbox).join("")}</div>
+      <div class="dbl"><b>더블 적립권</b><span>현재 <b style="color:var(--ok)">${dbl.cur}</b> · 최종 <b>${dbl.fin}</b> <small>· 적립 ${dbl.inn} · 사용 ${dbl.out}</small></span></div></div>
+    <details class="hc" open><summary class="ht">🎟 다관람 카드 현황 <span>▲</span></summary>${boards || `<div class="empt">도장판이 없어요. 쿠폰 탭에서 만들 수 있어요.</div>`}</details>
+    <div class="hc"><p class="ht">📋 최근 관람</p>${past.length ? shown.map(rowH).join("") + (past.length > shown.length ? `<button type="button" class="more" data-more="1">이전 관람 ${past.length - shown.length}건 더 보기</button>` : "") : `<div class="empt">아직 관람 기록이 없어요.<br>위 <b>+ 기록</b> 버튼으로 남겨보세요.</div>`}</div>`;
 }
 
 /* ===== 4. 기록 입력창 ===== */
@@ -433,7 +485,8 @@ $("delBtn").onclick = () => {
 
 // 카드를 누르면 수정 창이 열려요
 $("list").onclick = e => {
-  const card = e.target.closest(".card");
+  if (e.target.closest("[data-more]")) { pastAll = true; renderHome(); return; }
+  const card = e.target.closest("[data-id]");
   if (card) openForm(records.find(r => r.id === card.dataset.id));
 };
 $("list").onkeydown = e => { if (e.key === "Enter") e.target.click(); };
@@ -716,25 +769,31 @@ function ask(title, body, ok) {
 $("f2").onsubmit = e => { e.preventDefault(); if (d2ok && d2ok() !== false) $("dlg2").close(); };
 $("d2c").onclick = () => $("dlg2").close();
 
+const BENEFIT_SHORT = { 3: "40% 할인권 ×2", 5: "폴라로이드", 7: "CD+포토북+50% 할인권" };
+function stampNow(b) { // 이미 지난 회차까지 찍힌 칸 수
+  const d = new Date(), t = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return b.stamps.filter(x => { const r = x.rec && records.find(y => y.id === x.rec); return r ? r.date + " " + r.time <= t : x.date <= t.slice(0, 10); }).reduce((a, x) => a + x.qty, 0);
+}
 function renderCoupon() {
+  const icons = { 3: "🎟", 5: "📸", 7: "🎁" };
   const boards = meta.boards.map(b => {
-    const n = stampN(b);
-    const cells = Array.from({ length: 7 }, (_, i) => { const ms = BENEFITS.some(x => x[0] === i + 1);
-      return `<i class="st ${i < n ? "on" : ""} ${ms ? "ms" : ""}">${ms ? i + 1 : ""}</i>`; }).join("");
-    const got = BENEFITS.filter(x => n >= x[0]).map(x => x[0] + "회차").join("·");
-    return `<div class="card nb"><div class="when">${esc(b.name)} <span class="meta">${n}칸${got ? " · " + got + " 혜택 달성" : ""}</span></div>
-      <div class="stamps">${cells}</div>
-      <div class="btnrow"><button type="button" class="sm" data-a="stamp" data-b="${b.id}">도장 찍기</button>
-      <button type="button" class="sm" data-a="hist" data-b="${b.id}">이력</button>
-      <button type="button" class="sm" data-a="delb" data-b="${b.id}">삭제</button></div></div>`;
-  }).join("") || `<div class="empty">도장판이 없어요.<br>새 도장판을 만들어 관람을 적립해 보세요.</div>`;
+    const n = stampN(b), top = [...BENEFITS].reverse().find(x => n >= x[0]);
+    const ticks = BENEFITS.slice(0, -1).map(([m]) => `<i class="tick ${n >= m ? "on" : ""}" style="left:${m / 7 * 100}%"></i>`).join("");
+    return `<div class="card nb"><div class="bh"><b>${esc(b.name)} <span class="ms">[${BENEFITS.map(([m]) => `<span class="${n >= m ? "" : "off"}">${icons[m] || "🎫"}</span>`).join("")}]</span></b>
+      <span class="ib"><button type="button" class="sq" data-a="stamp" data-b="${b.id}" aria-label="도장 찍기">📝</button><button type="button" class="sq" data-a="delb" data-b="${b.id}" aria-label="도장판 삭제">✕</button></span></div>
+      <div class="bl"><b>현재 ${stampNow(b)}칸</b><span>/ 최종 ${n}칸</span></div>
+      <div class="pbar"><i style="width:${Math.min(n, 7) / 7 * 100}%"></i>${ticks}</div>
+      <p class="ach ${top ? "" : "dim"}">${top ? `★ ${BENEFIT_SHORT[top[0]] || top[1]} 달성!` : `첫 혜택까지 ${BENEFITS[0][0] - n}칸 남았어요`}</p>
+      <button type="button" class="more" data-a="hist" data-b="${b.id}">이력 보기</button></div>`;
+  }).join("");
   const led = [...meta.coupons].sort((a, b) => (b.date + b.id).localeCompare(a.date + a.id)).map(c =>
     `<div class="led"><span>${c.date.slice(5).replace("-", "/")} · ${esc(c.kind)} ${c.type} ${c.qty}장${c.memo ? " · " + esc(c.memo) : ""}</span>
     <button type="button" class="sm" data-a="cdel" data-id="${c.id}" aria-label="기록 삭제">✕</button></div>`).join("");
   $("couponBox").innerHTML = `<h3>쿠폰 현황</h3><div class="kpis">${COUPONS.map(k => `<div class="kpi"><small>${k}</small><b>${bal(k)}장</b></div>`).join("")}</div>
     <div class="btnrow" style="margin-top:10px"><button type="button" class="sm" data-a="pack">🎁 쿠폰팩 추가</button><button type="button" class="sm" data-a="adj">+ 쿠폰 추가/차감</button></div>
     <details><summary>쿠폰 상세 기록 (${meta.coupons.length})</summary>${led || `<p class="note">아직 기록이 없어요.</p>`}</details>
-    <div class="sp-h"><h3>다관람 카드</h3><button type="button" class="sm" data-a="nb">+ 도장판</button></div>${boards}
+    <h3>다관람 카드</h3><button type="button" class="nbig" data-a="nb">🎫 새 다관람 카드 시작하기</button>
+    <p class="meta" style="text-align:center">7칸 · 3칸:40%×2 · 5칸:폴라로이드 · 7칸:50%+CD+포토북</p>${boards}
     <h3>다관람 혜택</h3><div class="card nb">${BENEFITS.map(([n, t]) => `<div class="bn"><b>${n}회차</b><span>${t}</span></div>`).join("")}</div>`;
 }
 
