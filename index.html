@@ -117,7 +117,7 @@ nav button.on{color:var(--silver);font-weight:700}
 .legend .s{display:inline-block;width:12px;vertical-align:middle;margin-right:4px}
 /* ===== 5. 3단계: 달력 이벤트, 통계 표, 쿠폰·도장, 설정 ===== */
 nav button{font-size:12.5px;padding:10px 2px}
-.day{align-items:stretch;gap:2px;padding:4px 2px;min-height:56px;overflow:visible;text-align:center}
+.day{align-items:stretch;gap:2px;padding:4px 2px;min-height:84px;background:none;overflow:visible;text-align:center}
 .dn{font-size:13px}
 .eb{display:block;height:14px;margin:0 -3px;font-size:10px;line-height:14px;color:#1d2038;text-align:left;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .eb.nil{background:none}
@@ -141,6 +141,9 @@ nav button{font-size:12.5px;padding:10px 2px}
 .led{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
 details summary{cursor:pointer;color:var(--dim);font-size:14px;margin:12px 0 6px}
 .day.nm{opacity:.35}
+.chk{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--silver);margin:16px 0 0}
+.chk input{width:auto;margin:0}
+.day.sun .dn{color:var(--r)}.day.sat .dn{color:var(--dim)}
 </style>
 </head>
 <body>
@@ -179,6 +182,7 @@ details summary{cursor:pointer;color:var(--dim);font-size:14px;margin:12px 0 6px
     <select id="time" required></select>
     <p class="note" id="note" hidden>이 날짜는 일정표에 없어요. 시간과 배우를 직접 골라주세요.</p>
     <div id="castBox"></div>
+    <label class="chk"><input type="checkbox" id="tbd"> 미정 (예매 미확정)</label>
     <label>좌석 (모르면 비워두세요)</label>
     <div class="seatrow">
       <select id="floor" aria-label="층"></select>
@@ -186,6 +190,8 @@ details summary{cursor:pointer;color:var(--dim);font-size:14px;margin:12px 0 6px
       <select id="num" aria-label="번호"></select>
     </div>
     <p class="note" id="grade" hidden></p>
+    <label for="coupon">쿠폰종 (선택)</label>
+    <select id="coupon"></select>
     <label for="price">티켓 가격 (원)</label>
     <input type="number" id="price" min="0" step="100" inputmode="numeric" placeholder="숫자만 입력">
     <label for="board">다관람 카드 도장 (선택)</label>
@@ -333,7 +339,7 @@ function render() {
       <div class="chips">${Object.keys(ROLES).map(role =>
         `<span class="chip ${ROLE_CLASS[role]}">${role} ${esc(r.cast[role])}</span>`).join("")}</div>
       ${r.rating ? `<div class="cardstars" aria-label="별점 ${r.rating}점">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</div>` : ""}
-      <div class="meta">${seatText(r.seat)}${r.price != null ? " · " + won(r.price) : ""}</div>
+      <div class="meta">${r.tbd ? "예매 미확정" : seatText(r.seat)}${r.coupon ? " · " + esc(r.coupon) : ""}${r.price != null ? " · " + won(r.price) : ""}</div>
       ${r.comment ? `<p class="comment">${esc(r.comment)}</p>` : ""}
     </div>`).join("");
 }
@@ -377,6 +383,8 @@ function openForm(rec, pre) {
   const s = rec && rec.seat;
   $("floor").value = s ? s.floor : "";
   fillRows(s && s.row, s && s.num);
+  $("tbd").checked = !!(rec && rec.tbd); setTbd($("tbd").checked);
+  $("coupon").value = rec && rec.coupon || "";
   $("price").value = rec && rec.price != null ? rec.price : "";
   fillBoards(rec);
   setRating(rec && rec.rating || 0);
@@ -405,17 +413,18 @@ $("form").onsubmit = e => {
     cast: Object.fromEntries(Object.keys(ROLES).map(role => [role, $("cast-" + role).value])),
     comment: $("comment").value.trim(),
     memo: $("memo").value.trim(),
-    seat: seatVal, price: priceVal, rating,
+    seat: seatVal, price: priceVal, rating, tbd: $("tbd").checked, coupon: $("coupon").value,
   };
   records = editingId ? records.map(r => r.id === editingId ? rec : r) : [...records, rec];
   linkStamp(rec, boardId());
+  syncCoupon(rec);
   save(); render(); $("dlg").close();
 };
 
 $("delBtn").onclick = () => {
   if (!confirm("이 기록을 삭제할까요?")) return;
   records = records.filter(r => r.id !== editingId);
-  unstamp(editingId); saveMeta();
+  unstamp(editingId); meta.coupons = meta.coupons.filter(c => c.rec !== editingId); saveMeta();
   save(); render(); $("dlg").close();
 };
 
@@ -507,6 +516,14 @@ function castOf(date, time) {
   return rec ? rec.cast : SCHEDULE[date][time];
 }
 
+const TICKET_TYPES = ["없음 (일반)", "40% 할인권 (40%)", "50% 할인권 (50%)", "증빙패스", "프리뷰 할인", "조기예매 할인 (20%)",
+  "재관람 할인 (30%)", "MJ Starfish 할인 (25%)", "타임세일", "마티네 (30%)", "장애인/국가유공자 (50%)", "기타"];
+$("coupon").innerHTML = TICKET_TYPES.map((t, i) => `<option value="${i ? t : ""}">${t}</option>`).join("");
+function setTbd(v) { // 예매 미확정이면 좌석은 고를 수 없어요
+  ["floor", "row", "num"].forEach(id => { $(id).disabled = v; });
+  if (v) { $("floor").value = ""; fillRows(); }
+}
+$("tbd").onchange = () => setTbd($("tbd").checked);
 const EVENTS = [
   // 이벤트는 여기에 한 줄씩 추가해요. 예)
   { title: "프리뷰", start: "2026-10-21", end: "2026-10-25", color: "#a8d5a2" },
@@ -541,8 +558,11 @@ function renderCal() {
       return `<span class="eb" style="background:${e.color || "var(--rose)"}">${show ? esc(e.title) : ""}</span>`;
     }).join("");
     const shown = dayTimes(date).filter(t => !filtOn() || matches(castOf(date, t)));
-    const mark = records.some(r => r.date === date && shown.includes(r.time)) ? `<span class="tm seen">✓</span>` : "";
-    h += `<button type="button" class="day ${SCHEDULE[date] ? "" : "off"} ${filtOn() && SCHEDULE[date] && !shown.length ? "nm" : ""} ${date === selDay ? "sel" : ""} ${date === todayStr ? "today" : ""}" data-date="${date}"><span class="dn">${d}</span>${bars}${mark}</button>`;
+    const times = shown.map(t => {
+      const rec = records.find(r => r.date === date && r.time === t), ok = rec && !rec.tbd;
+      return `<span class="tm ${ok ? "seen" : ""}">${ok ? "✓ " : ""}${t}</span>`;
+    }).join("");
+    h += `<button type="button" class="day ${SCHEDULE[date] ? "" : "off"} ${filtOn() && SCHEDULE[date] && !shown.length ? "nm" : ""} ${date === selDay ? "sel" : ""} ${date === todayStr ? "today" : ""} ${["sun", "", "", "", "", "", "sat"][new Date(date + "T00:00").getDay()]}" data-date="${date}"><span class="dn">${d}</span>${bars}${times}</button>`;
   }
   $("calGrid").innerHTML = h;
   renderDetail();
@@ -555,7 +575,7 @@ function renderDetail() {
   const rows = dayTimes(selDay).filter(t => !filtOn() || matches(castOf(selDay, t))).map(t => {
     const rec = records.find(r => r.date === selDay && r.time === t);
     const cast = castOf(selDay, t);
-    return `<div class="sess"><div><b>${t}</b>${rec ? ` <span class="seen">${rec.seat ? "✓ 예매확정" : "✓ 관람 기록"}</span>` : ""}
+    return `<div class="sess"><div><b>${t}</b>${rec ? ` <span class="seen" ${rec.tbd ? 'style="color:var(--dim)"' : ""}>${rec.tbd ? "예매 미확정" : "✓ 예매확정"}</span>` : ""}
       <div class="chips">${Object.keys(ROLES).map(role => `<span class="chip ${ROLE_CLASS[role]}">${role} ${esc(cast[role])}</span>`).join("")}</div></div>
       <button type="button" data-time="${t}" data-id="${rec ? rec.id : ""}">${rec ? "수정" : "기록"}</button></div>`;
   }).join("");
@@ -751,6 +771,14 @@ $("d2b").onclick = e => {
 };
 
 /* 기록과 도장 연동: 기록을 저장하면 고른 도장판에 1칸이 찍혀요 */
+/* 기록에서 고른 쿠폰종이 할인권이면 쿠폰 수량에서 1장 자동 차감해요 (기록을 고치거나 지우면 함께 바뀌어요) */
+const AUTO_USE = { "40% 할인권 (40%)": "40% 할인권", "50% 할인권 (50%)": "50% 할인권", "증빙패스": "증빙패스" };
+function syncCoupon(rec) {
+  meta.coupons = meta.coupons.filter(c => c.rec !== rec.id);
+  const kind = AUTO_USE[rec.coupon];
+  if (kind) meta.coupons.push({ id: uid(), kind, type: "사용", qty: 1, date: rec.date, memo: "관극 기록에서 자동 차감", rec: rec.id });
+  saveMeta();
+}
 function unstamp(id) { meta.boards.forEach(b => { b.stamps = b.stamps.filter(s => s.rec !== id); }); }
 function linkStamp(rec, bid) {
   unstamp(rec.id);
