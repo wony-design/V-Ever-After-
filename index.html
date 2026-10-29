@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>V Ever After 관극 다이어리</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="V Ever After">
+<meta name="theme-color" content="#12152b" id="tc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== 1. 색과 글꼴: 공연 포스터의 남색·장미색에서 가져왔어요 ===== */
+:root{
+  --night:#12152b; --panel:#1c2142; --line:#343b6b;
+  --silver:#d5d8ea; --dim:#8f94b8; --rose:#c8456a;
+  --f:#7b96ff;  /* 프란체스: 파랑 */
+  --r:#e8607f;  /* 레미: 장미빛 */
+  --j:#e8b062;  /* 조이: 촛불빛 */
+  --lv0:#2a3060; --off:#5b6190; --ok:#6fd3a0; color-scheme:dark;
+}
+html[data-theme=light]{--night:#f3f1f8;--panel:#fff;--line:#dad6e8;--silver:#1e2142;--dim:#666b92;--rose:#b8335a;
+  --f:#3f5ad0;--r:#c13b61;--j:#9a6a17;--lv0:#e6e4f0;--off:#aaaecb;--ok:#1b8a5a;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--night);color:var(--silver);line-height:1.5;
+  font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:560px;margin:0 auto;padding:28px 18px 160px}
+h1{font-family:"Nanum Myeongjo",serif;font-weight:800;font-size:34px;margin:0;letter-spacing:.02em}
+.sub{color:var(--dim);font-size:14px;margin:4px 0 0}
+.count{margin:22px 0 14px;font-size:14px;color:var(--dim)}
+.count b{color:var(--silver);font-size:18px}
+
+/* ===== 2. 기록 카드 ===== */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px;cursor:pointer}
+.card:hover{border-color:var(--dim)}
+.when{font-family:"Nanum Myeongjo",serif;font-weight:700;font-size:17px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.chip{font-size:13px;padding:3px 10px;border-radius:99px;border:1px solid}
+.chip.f{color:var(--f)} .chip.r{color:var(--r)} .chip.j{color:var(--j)}
+.comment{margin:10px 0 0;font-size:15px}
+.empty{text-align:center;color:var(--dim);padding:48px 12px;border:1px dashed var(--line);border-radius:10px}
+
+/* ===== 3. 버튼과 입력창 ===== */
+button{font:inherit;cursor:pointer}
+.add{position:fixed;right:max(18px,calc(50% - 262px));bottom:calc(76px + env(safe-area-inset-bottom));
+  background:var(--rose);color:#fff;border:0;border-radius:99px;padding:13px 22px;font-weight:700;box-shadow:0 4px 16px #0008}
+dialog{width:min(520px,calc(100% - 24px));max-height:92vh;overflow:auto;background:var(--panel);color:var(--silver);
+  border:1px solid var(--line);border-radius:12px;padding:20px}
+dialog::backdrop{background:#000a}
+dialog h2{font-family:"Nanum Myeongjo",serif;margin:0 0 14px;font-size:22px}
+label{display:block;font-size:13px;color:var(--dim);margin:12px 0 4px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--silver);background:var(--night);
+  border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+textarea{min-height:90px;resize:vertical}
+input[type=date]{cursor:pointer} /* 달력 아이콘이 어두운 배경에서도 보이게 */
+.note{font-size:13px;color:var(--j);margin:6px 0 0}
+.row{display:flex;gap:8px;margin-top:20px}
+.row button{flex:1;padding:11px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--silver)}
+.row .save{background:var(--rose);border-color:var(--rose);color:#fff;font-weight:700}
+.row .del{flex:0 0 auto;color:#ff8a8a}
+:focus-visible{outline:2px solid var(--f);outline-offset:2px}
+/* ===== 4. 2단계: 탭, 별점, 좌석, 캘린더, 통계 ===== */
+h3{font-family:"Nanum Myeongjo",serif;font-size:18px;margin:26px 0 8px}
+h4{font-size:13px;color:var(--dim);margin:12px 0 4px;font-weight:400}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:center;background:var(--panel);
+  border-top:1px solid var(--line);padding:4px 0 calc(4px + env(safe-area-inset-bottom))}
+nav button{flex:1;max-width:120px;background:none;border:0;color:var(--dim);padding:10px 4px;font-size:14px}
+nav button.on{color:var(--silver);font-weight:700}
+.stars{display:flex;gap:2px}
+.stars button{background:none;border:0;font-size:32px;color:var(--line);padding:0 3px;line-height:1}
+.stars button.on{color:var(--j)}
+.cardstars{color:var(--j);font-size:14px;letter-spacing:1px;margin:8px 0 0}
+.meta{margin:6px 0 0;font-size:13px;color:var(--dim)}
+.seatrow{display:flex;gap:8px}
+.seatrow select{flex:1;min-width:0}
+.fb{background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:99px;padding:4px 10px;font-size:13px;margin:0 4px 4px 0}
+.fb.on{color:#fff;background:var(--rose);border-color:var(--rose)}
+.flt{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin-bottom:6px}
+.flt .chip{min-width:64px;text-align:center;margin-right:6px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px}
+.cal-head button{background:var(--panel);border:1px solid var(--line);color:var(--silver);border-radius:8px;width:42px;height:36px;font-size:18px}
+.grid7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{text-align:center;font-size:12px;color:var(--dim)}
+.day{min-height:54px;background:var(--panel);border:1px solid transparent;border-radius:8px;color:var(--silver);
+  padding:5px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:14px}
+.day.off{background:transparent;color:var(--off)}
+.day.today{box-shadow:inset 0 0 0 1px var(--rose)}
+.day.sel{border-color:var(--silver)}
+.dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.dot.hit{background:var(--j)} .dot.seen{background:var(--rose)}
+#calDetail h3{margin-top:18px}
+.sess{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.sess.hl{border-color:var(--j)}
+.sess .chips{margin-top:6px}
+.sess .seen{color:var(--rose);font-size:13px}
+.sess button,.more{background:transparent;border:1px solid var(--line);color:var(--silver);border-radius:8px;padding:8px 14px}
+.more{width:100%;margin-top:4px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi small{display:block;color:var(--dim);font-size:12px}
+.kpi b{font-size:18px}
+.bar{display:grid;grid-template-columns:116px 1fr auto;align-items:center;gap:8px;font-size:14px;margin:6px 0}
+.track{height:10px;background:var(--night);border-radius:5px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:5px}
+.stage{background:#d5d8ea22;text-align:center;font-size:11px;letter-spacing:.3em;margin:4px 0 8px;padding:2px;border-radius:3px;color:var(--dim)}
+.hrow{display:flex;align-items:center;gap:4px;margin-bottom:2px}
+.rl{width:14px;font-size:10px;color:var(--dim)}
+.hcells{flex:1;display:grid;grid-template-columns:repeat(22,1fr);gap:2px}
+.s{display:block;aspect-ratio:1;border-radius:2px}
+.lv0{background:var(--lv0)} .lv1{background:#c8456a40} .lv2{background:#c8456a80}
+.lv3{background:#c8456acc} .lv4{background:#e8607f} .lv5{background:#f5a0b5} .hold{background:#555a7a55}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--dim);margin-bottom:8px}
+.legend .s{display:inline-block;width:12px;vertical-align:middle;margin-right:4px}
+/* ===== 5. 3단계: 달력 이벤트, 통계 표, 쿠폰·도장, 설정 ===== */
+nav button{font-size:12.5px;padding:10px 2px}
+.day{align-items:stretch;gap:2px;padding:4px 2px;min-height:56px;overflow:visible;text-align:center}
+.dn{font-size:13px}
+.eb{display:block;height:14px;margin:0 -3px;font-size:10px;line-height:14px;color:#1d2038;text-align:left;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eb.nil{background:none}
+.tm{font-size:10.5px;color:var(--dim);line-height:1.25}
+.tm.seen{color:var(--ok);font-weight:700}.tm.hit{color:var(--j);font-weight:700}
+.sess .seen{color:var(--ok)}
+.tb{width:100%;border-collapse:collapse;font-size:14px}
+.tb th{color:var(--dim);font-weight:400;text-align:left;border-bottom:1px solid var(--line);padding:6px 4px;font-size:13px}
+.tb td{padding:8px 4px;border-bottom:1px solid var(--line)}
+.tb td:nth-last-child(2){color:var(--dim)}.tb th:last-child,.tb td:last-child{text-align:right}.tb td:last-child{font-weight:700}
+.sp-h{display:flex;align-items:center;justify-content:space-between}
+.srow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)}
+.blur{filter:blur(7px);user-select:none;pointer-events:none}
+.card.nb{cursor:default}
+.stamps{display:flex;gap:6px;margin:12px 0}
+.st{flex:1;aspect-ratio:1;border-radius:50%;border:1.5px dashed var(--line);display:grid;place-items:center;font-size:12px;font-style:normal;color:var(--dim)}
+.st.ms{border-style:solid;border-color:var(--j)}.st.on{background:var(--rose);border-color:var(--rose);color:#fff}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap}
+.sm,.hl2{background:transparent;border:1px solid var(--line);color:var(--silver);border-radius:8px;padding:7px 12px;font-size:13px}
+.bn{display:flex;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}.bn:last-child{border:0}.bn b{flex:0 0 58px}
+.led{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
+details summary{cursor:pointer;color:var(--dim);font-size:14px;margin:12px 0 6px}
+.day.nm{opacity:.35}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🩸 V Ever After</h1>
+  <p class="sub">관극 다이어리</p>
+  <section id="tab-home" class="tab">
+  <p class="count">지금까지 <b id="count">0</b>회 관람</p>
+  <div id="list"></div>
+  </section>
+  <section id="tab-cal" class="tab" hidden>
+    <div id="calFilter"></div>
+    <div class="cal-head"><button type="button" id="prevM" aria-label="이전 달">‹</button><b id="calTitle"></b><button type="button" id="nextM" aria-label="다음 달">›</button></div>
+    <div class="grid7" id="calGrid"></div>
+    <div id="calDetail"></div>
+  </section>
+  <section id="tab-coupon" class="tab" hidden><div id="couponBox"></div></section>
+  <section id="tab-stats" class="tab" hidden><div id="statsBox"></div></section>
+  <section id="tab-set" class="tab" hidden><div id="setBox"></div></section>
+</div>
+<button class="add" id="addBtn">+ 기록</button>
+<nav>
+  <button type="button" data-tab="home" class="on">🏠 홈</button>
+  <button type="button" data-tab="cal">📅 캘린더</button>
+  <button type="button" data-tab="coupon">🎫 쿠폰</button>
+  <button type="button" data-tab="stats">📊 통계</button>
+  <button type="button" data-tab="set">⚙️ 설정</button>
+</nav>
+
+<dialog id="dlg">
+  <h2 id="dlgTitle">관극 기록</h2>
+  <form id="form">
+    <label for="date">날짜</label>
+    <input type="date" id="date" required>
+    <label for="time">시간</label>
+    <select id="time" required></select>
+    <p class="note" id="note" hidden>이 날짜는 일정표에 없어요. 시간과 배우를 직접 골라주세요.</p>
+    <div id="castBox"></div>
+    <label>좌석 (모르면 비워두세요)</label>
+    <div class="seatrow">
+      <select id="floor" aria-label="층"></select>
+      <select id="row" aria-label="열"></select>
+      <select id="num" aria-label="번호"></select>
+    </div>
+    <p class="note" id="grade" hidden></p>
+    <label for="price">티켓 가격 (원)</label>
+    <input type="number" id="price" min="0" step="100" inputmode="numeric" placeholder="숫자만 입력">
+    <label for="board">다관람 카드 도장 (선택)</label>
+    <select id="board"></select>
+    <input type="text" id="newBoard" maxlength="20" placeholder="새 도장판 이름 (비워두면 번호 자동)" hidden style="margin-top:8px">
+    <label>별점</label>
+    <div class="stars" id="stars"></div>
+    <label for="comment">한줄 코멘트</label>
+    <input type="text" id="comment" maxlength="60" placeholder="오늘 공연을 한 줄로 남겨보세요">
+    <label for="memo">감상 메모</label>
+    <textarea id="memo" placeholder="기억하고 싶은 장면, 넘버, 느낌"></textarea>
+    <div class="row">
+      <button type="button" class="del" id="delBtn" hidden>삭제</button>
+      <button type="button" id="cancelBtn">취소</button>
+      <button type="submit" class="save">저장</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="dlg2"><h2 id="d2t"></h2>
+  <form id="f2"><div id="d2b"></div>
+    <div class="row"><button type="button" id="d2c">닫기</button><button type="submit" class="save" id="d2s">저장</button></div></form>
+</dialog>
+<input type="file" id="imp" accept=".json,application/json" hidden>
+
+<script>
+/* ===== 1. 공연 정보 (데이터) ===== */
+const ROLES = {
+  "프란체스": ["랑연", "이준우", "이승준"],
+  "레미":     ["박경호", "권태하", "정단비"],
+  "조이":     ["공현비", "이동연", "함태규"],
+};
+const ROLE_CLASS = { "프란체스": "f", "레미": "r", "조이": "j" };
+
+// 일정표 한 줄 = "월-일 시(24시간) 프란체스·레미·조이". 글자 하나가 배우 한 명이에요.
+const NAMES = { 랑:"랑연", 준:"이준우", 승:"이승준", 박:"박경호", 권:"권태하", 정:"정단비", 공:"공현비", 동:"이동연", 함:"함태규" };
+const RAW = `
+10-21 20 준권동
+10-22 20 랑정공
+10-23 20 승박함
+10-24 15 준박동
+10-24 19 랑정공
+10-25 14 승권함
+10-25 18 승박동
+10-27 20 준박함
+10-28 20 승권동
+10-29 16 랑정공
+10-29 20 승박동
+10-30 20 랑정공
+10-31 15 승권함
+10-31 19 승박동
+11-01 14 준권함
+11-01 18 준박동
+11-03 20 랑정공
+11-04 20 준박함
+11-05 16 준박동
+11-05 20 승권동
+11-06 20 승박함
+11-07 15 준권동
+11-07 19 랑정공
+11-08 14 승박동
+11-08 18 승권함
+11-10 20 승박함
+11-11 20 준권동
+11-12 16 승권동
+11-12 20 랑정공
+11-13 20 준박함
+11-14 15 승권함
+11-14 19 승박동
+11-15 14 랑정공
+11-15 18 준박동
+11-17 20 승박동
+11-18 20 준박함
+11-19 16 승권동
+11-19 20 랑정공
+11-20 20 준권함
+11-21 15 승박동
+11-21 19 승권함
+11-22 14 랑정공
+11-22 18 준박동
+11-24 20 승권함
+11-25 20 준박동
+11-26 16 승박함
+11-26 20 랑정공
+11-27 20 준권동
+11-28 15 승박동
+11-28 19 랑정공
+11-29 14 준권함
+11-29 18 준박동
+12-01 20 준박함
+12-02 20 랑정공
+12-03 16 준권함
+12-03 20 승권동
+12-04 20 승박동
+12-05 15 랑정공
+12-05 19 준박동
+12-06 14 승박동
+12-06 18 승권함
+`;
+
+// 위 글자 목록을 { "2026-10-21": { "20:00": {프란체스:"이준우", ...} } } 모양으로 바꿔요.
+const SCHEDULE = {};
+RAW.trim().split("\n").forEach(line => {
+  const [md, hour, code] = line.trim().split(" ");
+  const date = "2026-" + md, time = hour.padStart(2, "0") + ":00";
+  SCHEDULE[date] = SCHEDULE[date] || {};
+  SCHEDULE[date][time] = { "프란체스": NAMES[code[0]], "레미": NAMES[code[1]], "조이": NAMES[code[2]] };
+});
+const ALL_TIMES = ["14:00", "15:00", "16:00", "18:00", "19:00", "20:00"];
+
+/* ===== 2. 저장하기: 브라우저 안에 기록을 보관해요 ===== */
+const KEY = "v-ever-after-diary";
+let fallback = null; // 저장 기능이 막힌 환경에서는 임시로 메모리에만 담아요
+let records = load();
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+  catch (e) { return fallback || []; }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(records)); }
+  catch (e) { fallback = records; }
+}
+
+/* ===== 3. 화면 그리기 ===== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+
+function formatWhen(date, time) {
+  const d = new Date(date + "T00:00");
+  const day = "일월화수목금토"[d.getDay()];
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${day}) ${time}`;
+}
+
+function render() {
+  renderCal(); renderStats(); renderCoupon(); renderSettings();
+  // 최근 날짜가 위로 오도록 정렬
+  const sorted = [...records].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+  $("count").textContent = sorted.length;
+  if (!sorted.length) {
+    $("list").innerHTML = `<div class="empty">아직 기록이 없어요.<br>아래 <b>+ 기록</b> 버튼으로 첫 관극을 남겨보세요.</div>`;
+    return;
+  }
+  $("list").innerHTML = sorted.map(r => `
+    <div class="card" data-id="${r.id}" tabindex="0">
+      <div class="when">${formatWhen(r.date, r.time)}</div>
+      <div class="chips">${Object.keys(ROLES).map(role =>
+        `<span class="chip ${ROLE_CLASS[role]}">${role} ${esc(r.cast[role])}</span>`).join("")}</div>
+      ${r.rating ? `<div class="cardstars" aria-label="별점 ${r.rating}점">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</div>` : ""}
+      <div class="meta">${seatText(r.seat)}${r.price != null ? " · " + won(r.price) : ""}</div>
+      ${r.comment ? `<p class="comment">${esc(r.comment)}</p>` : ""}
+    </div>`).join("");
+}
+
+/* ===== 4. 기록 입력창 ===== */
+let editingId = null;
+
+// 배우 선택칸 3개를 한 번만 만들어 둬요
+$("castBox").innerHTML = Object.keys(ROLES).map(role => `
+  <label for="cast-${role}">${role}</label>
+  <select id="cast-${role}" required>
+    <option value="">선택</option>
+    ${ROLES[role].map(n => `<option>${n}</option>`).join("")}
+  </select>`).join("");
+
+// 날짜를 고르면 그날 공연 시간만 보여줘요
+function fillTimes(selected) {
+  const day = SCHEDULE[$("date").value];
+  const times = day ? Object.keys(day) : ALL_TIMES;
+  $("note").hidden = !!day || !$("date").value;
+  $("time").innerHTML = `<option value="">선택</option>` + times.map(t => `<option>${t}</option>`).join("");
+  if (selected && times.includes(selected)) $("time").value = selected;
+  if (day && times.length === 1) { $("time").value = times[0]; autoCast(); }
+}
+
+// 시간을 고르면 일정표를 보고 배우를 자동으로 채워줘요
+function autoCast() {
+  const found = (SCHEDULE[$("date").value] || {})[$("time").value];
+  if (!found) return;
+  Object.keys(ROLES).forEach(role => { $("cast-" + role).value = found[role]; });
+}
+
+function openForm(rec, pre) {
+  editingId = rec ? rec.id : null;
+  $("dlgTitle").textContent = rec ? "기록 수정" : "관극 기록";
+  $("delBtn").hidden = !rec;
+  $("date").value = rec ? rec.date : pre ? pre.date : "";
+  fillTimes(rec && rec.time);
+  Object.keys(ROLES).forEach(role => { $("cast-" + role).value = rec ? rec.cast[role] : ""; });
+  if (!rec && pre) { if (pre.time) $("time").value = pre.time; autoCast(); }
+  const s = rec && rec.seat;
+  $("floor").value = s ? s.floor : "";
+  fillRows(s && s.row, s && s.num);
+  $("price").value = rec && rec.price != null ? rec.price : "";
+  fillBoards(rec);
+  setRating(rec && rec.rating || 0);
+  $("comment").value = rec ? rec.comment : "";
+  $("memo").value = rec ? rec.memo : "";
+  $("dlg").showModal();
+}
+
+$("addBtn").onclick = () => openForm(null);
+$("cancelBtn").onclick = () => $("dlg").close();
+$("date").onchange = () => fillTimes();
+// 날짜 칸 어디를 눌러도 달력 창이 열려요 (지원하지 않는 브라우저는 그냥 넘어가요)
+$("date").onclick = () => { try { $("date").showPicker(); } catch (e) {} };
+$("time").onchange = autoCast;
+
+$("form").onsubmit = e => {
+  e.preventDefault();
+  const f = $("floor").value, rw = $("row").value, nm = $("num").value;
+  if ((f || rw || nm) && !(f && rw && nm)) { alert("좌석은 층·열·번호를 모두 고르거나, 모두 비워 주세요."); return; }
+  const seatVal = f ? { floor: f, row: rw, num: Number(nm) } : null;
+  const priceVal = $("price").value === "" ? null : Math.max(0, Number($("price").value));
+  const rec = {
+    id: editingId || String(Date.now()),
+    date: $("date").value,
+    time: $("time").value,
+    cast: Object.fromEntries(Object.keys(ROLES).map(role => [role, $("cast-" + role).value])),
+    comment: $("comment").value.trim(),
+    memo: $("memo").value.trim(),
+    seat: seatVal, price: priceVal, rating,
+  };
+  records = editingId ? records.map(r => r.id === editingId ? rec : r) : [...records, rec];
+  linkStamp(rec, boardId());
+  save(); render(); $("dlg").close();
+};
+
+$("delBtn").onclick = () => {
+  if (!confirm("이 기록을 삭제할까요?")) return;
+  records = records.filter(r => r.id !== editingId);
+  unstamp(editingId); saveMeta();
+  save(); render(); $("dlg").close();
+};
+
+// 카드를 누르면 수정 창이 열려요
+$("list").onclick = e => {
+  const card = e.target.closest(".card");
+  if (card) openForm(records.find(r => r.id === card.dataset.id));
+};
+$("list").onkeydown = e => { if (e.key === "Enter") e.target.click(); };
+
+/* ===== 5. 2단계: 좌석 정보 (좌석 배치도 이미지 기준) ===== */
+// [첫 번호, 끝 번호, 시작 칸] — 시작 칸은 히트맵에서 통로 위치를 맞추기 위한 값이에요 (22칸 기준)
+const AX = [[1,4,0],[5,16,5],[17,20,18]];
+const GX = [[1,1,3],[2,13,5],[14,17,18]];
+const CX = [[1,4,3],[5,13,8],[14,17,18]];
+const SEATMAP = {
+  "1층": { A:AX, B:AX, C:AX, D:[[1,4,0],[5,15,5],[16,19,18]], E:[[1,3,0]], F:[[1,12,5],[13,16,18]],
+           G:GX, H:GX, I:GX, J:AX, K:AX, L:AX, M:AX, N:[[1,8,0],[9,19,9]] },
+  "2층": { B:[[1,5,2],[6,14,8],[15,18,18]], C:CX, D:CX, E:CX, F:CX, G:[[1,17,3]] }
+};
+const HOLD = ["1층A1", "1층A20", "2층B18"]; // 판매보류석은 고를 수 없어요
+const gradeOf = s => s.floor === "2층" ? "S석" : s.row === "E" ? "휠체어석" : "R석";
+function seatNums(floor, row) {
+  const out = [];
+  ((SEATMAP[floor] || {})[row] || []).forEach(([a, b]) => {
+    for (let n = a; n <= b; n++) if (!HOLD.includes(floor + row + n)) out.push(n);
+  });
+  return out;
+}
+const won = n => Number(n).toLocaleString("ko-KR") + "원";
+const seatText = s => s ? `${s.floor} ${s.row}열 ${s.num}번 (${gradeOf(s)})` : "좌석 미정";
+
+$("floor").innerHTML = `<option value="">층</option><option>1층</option><option>2층</option>`;
+function fillRows(row, num) {
+  const rows = Object.keys(SEATMAP[$("floor").value] || {});
+  $("row").innerHTML = `<option value="">열</option>` + rows.map(r => `<option value="${r}">${r}열</option>`).join("");
+  if (row) $("row").value = row;
+  fillNums(num);
+}
+function fillNums(num) {
+  const f = $("floor").value, r = $("row").value;
+  $("num").innerHTML = `<option value="">번호</option>` + seatNums(f, r).map(n => `<option value="${n}">${n}번</option>`).join("");
+  if (num) $("num").value = num;
+  $("grade").hidden = !(f && r);
+  if (f && r) $("grade").textContent = gradeOf({ floor: f, row: r }) + " 구역";
+}
+$("floor").onchange = () => fillRows();
+$("row").onchange = () => fillNums();
+
+/* 별점: 같은 별을 다시 누르면 지워져요 */
+let rating = 0;
+function setRating(n) {
+  rating = n;
+  $("stars").innerHTML = [1, 2, 3, 4, 5].map(i =>
+    `<button type="button" class="${i <= n ? "on" : ""}" data-n="${i}" aria-label="${i}점">★</button>`).join("");
+}
+$("stars").onclick = e => {
+  const b = e.target.closest("button");
+  if (b) setRating(rating === +b.dataset.n ? 0 : +b.dataset.n);
+};
+
+/* ===== 6. 탭 이동 ===== */
+function showTab(name) {
+  ["home", "cal", "coupon", "stats", "set"].forEach(t => { $("tab-" + t).hidden = t !== name; });
+  $("addBtn").hidden = !["home", "cal"].includes(name);
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+  window.scrollTo(0, 0);
+}
+document.querySelector("nav").onclick = e => {
+  const b = e.target.closest("button");
+  if (b) showTab(b.dataset.tab);
+};
+
+/* ===== 7. 캘린더 ===== */
+const now = new Date();
+let calY = now.getFullYear(), calM = now.getMonth(), selDay = null;
+const filt = { "프란체스": "", "레미": "", "조이": "" }; // 고른 배우 (빈칸 = 전체)
+const filtOn = () => Object.values(filt).some(Boolean);
+const matches = cast => Object.keys(filt).every(role => !filt[role] || cast[role] === filt[role]);
+const pad = n => String(n).padStart(2, "0");
+
+function dayTimes(date) {
+  const set = new Set(Object.keys(SCHEDULE[date] || {}));
+  records.filter(r => r.date === date).forEach(r => set.add(r.time));
+  return [...set].sort();
+}
+function castOf(date, time) {
+  const rec = records.find(r => r.date === date && r.time === time);
+  return rec ? rec.cast : SCHEDULE[date][time];
+}
+
+const EVENTS = [
+  // 이벤트는 여기에 한 줄씩 추가해요. 예)
+  { title: "프리뷰", start: "2026-10-21", end: "2026-10-25", color: "#a8d5a2" },
+  { title: "쿠폰팩 증정", start: "2026-10-27", end: "2026-11-01", color: "#c9a8e0" },
+];
+// 기간이 겹치지 않는 이벤트는 같은 줄(위쪽)에 놓고, 겹칠 때만 아래 줄로 내려요
+const LANES = [];
+EVENTS.forEach((e, i) => {
+  const used = new Set();
+  for (let k = 0; k < i; k++) { const o = EVENTS[k]; if (e.start <= (o.end || o.start) && o.start <= (e.end || e.start)) used.add(LANES[k]); }
+  let l = 0; while (used.has(l)) l++;
+  LANES[i] = l;
+});
+const evOn = d => EVENTS.map((e, i) => ({ ...e, i: LANES[i] })).filter(e => d >= e.start && d <= (e.end || e.start));
+
+function renderCal() {
+  $("calFilter").innerHTML = Object.keys(ROLES).map(role => `
+    <div class="flt"><span class="chip ${ROLE_CLASS[role]}">${role}</span>
+      ${["", ...ROLES[role]].map(n =>
+        `<button type="button" class="fb ${filt[role] === n ? "on" : ""}" data-role="${role}" data-name="${n}">${n || "전체"}</button>`).join("")}
+    </div>`).join("") + `<p class="meta">${filtOn() ? "고른 배우가 나오는 회차만 보여요" : "전체 회차 표시 중"}</p>`;
+  $("calTitle").textContent = `${calY}년 ${calM + 1}월`;
+  const first = new Date(calY, calM, 1).getDay(), last = new Date(calY, calM + 1, 0).getDate();
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  let h = [..."일월화수목금토"].map(d => `<div class="dow">${d}</div>`).join("") + "<div></div>".repeat(first);
+  for (let d = 1; d <= last; d++) {
+    const date = `${calY}-${pad(calM + 1)}-${pad(d)}`, ev = evOn(date);
+    const bars = Array.from({ length: ev.length ? Math.max(...ev.map(e => e.i)) + 1 : 0 }, (_, i) => {
+      const e = ev.find(x => x.i === i);
+      if (!e) return `<span class="eb nil"></span>`;
+      const show = date === e.start || d === 1 || new Date(date + "T00:00").getDay() === 0;
+      return `<span class="eb" style="background:${e.color || "var(--rose)"}">${show ? esc(e.title) : ""}</span>`;
+    }).join("");
+    const shown = dayTimes(date).filter(t => !filtOn() || matches(castOf(date, t)));
+    const mark = records.some(r => r.date === date && shown.includes(r.time)) ? `<span class="tm seen">✓</span>` : "";
+    h += `<button type="button" class="day ${SCHEDULE[date] ? "" : "off"} ${filtOn() && SCHEDULE[date] && !shown.length ? "nm" : ""} ${date === selDay ? "sel" : ""} ${date === todayStr ? "today" : ""}" data-date="${date}"><span class="dn">${d}</span>${bars}${mark}</button>`;
+  }
+  $("calGrid").innerHTML = h;
+  renderDetail();
+}
+
+function renderDetail() {
+  if (!selDay) { $("calDetail").innerHTML = `<p class="count">날짜를 누르면 그날의 회차와 이벤트가 보여요. <span style="color:var(--ok)">✓</span> 기록한 회차</p>`; return; }
+  const evs = evOn(selDay).map(e => `<div class="sess" style="border-left:4px solid ${e.color || "var(--rose)"}"><div><b>${esc(e.title)}</b>
+    <div class="meta">${e.start.slice(5).replace("-", "/")}${e.end && e.end !== e.start ? " ~ " + e.end.slice(5).replace("-", "/") : ""}${e.note ? " · " + esc(e.note) : ""}</div></div></div>`).join("");
+  const rows = dayTimes(selDay).filter(t => !filtOn() || matches(castOf(selDay, t))).map(t => {
+    const rec = records.find(r => r.date === selDay && r.time === t);
+    const cast = castOf(selDay, t);
+    return `<div class="sess"><div><b>${t}</b>${rec ? ` <span class="seen">${rec.seat ? "✓ 예매확정" : "✓ 관람 기록"}</span>` : ""}
+      <div class="chips">${Object.keys(ROLES).map(role => `<span class="chip ${ROLE_CLASS[role]}">${role} ${esc(cast[role])}</span>`).join("")}</div></div>
+      <button type="button" data-time="${t}" data-id="${rec ? rec.id : ""}">${rec ? "수정" : "기록"}</button></div>`;
+  }).join("");
+  $("calDetail").innerHTML = `<h3>${formatWhen(selDay, "").trim()}</h3>` + evs +
+    (rows || `<p class="note">${filtOn() && dayTimes(selDay).length ? "고른 배우가 나오는 회차가 없어요." : "이 날은 일정표에 공연이 없어요."}</p>`) +
+    `<button type="button" class="more" data-time="">이 날짜에 직접 기록 추가</button>`;
+}
+
+$("calFilter").onclick = e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  filt[b.dataset.role] = b.dataset.name;
+  renderCal();
+};
+$("calGrid").onclick = e => {
+  const b = e.target.closest(".day");
+  if (b) { selDay = b.dataset.date; renderCal(); }
+};
+$("prevM").onclick = () => { calM--; if (calM < 0) { calM = 11; calY--; } renderCal(); };
+$("nextM").onclick = () => { calM++; if (calM > 11) { calM = 0; calY++; } renderCal(); };
+$("calDetail").onclick = e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.id) openForm(records.find(r => r.id === b.dataset.id));
+  else openForm(null, { date: selDay, time: b.dataset.time });
+};
+
+/* ===== 8. 통계 ===== */
+const PAIRS = ["프란체스|레미", "프란체스|조이", "레미|조이"];
+let pairBase = "프란체스";
+const FIXED = { "프란체스": "랑연", "레미": "정단비", "조이": "공현비" }; // 항상 함께 나오는 고정 캐스팅
+
+function bar(label, val, max, color, text) {
+  return `<div class="bar"><span>${esc(label)}</span><div class="track"><i style="width:${max ? val / max * 100 : 0}%;background:${color}"></i></div><b>${text || val}</b></div>`;
+}
+
+function heatmap(floor) {
+  const cnt = {};
+  records.forEach(r => {
+    if (r.seat && r.seat.floor === floor) { const k = r.seat.row + r.seat.num; cnt[k] = (cnt[k] || 0) + 1; }
+  });
+  const rows = Object.keys(SEATMAP[floor]).map(row => {
+    const cells = SEATMAP[floor][row].map(([a, b, c]) => {
+      let s = "";
+      for (let n = a; n <= b; n++) {
+        const k = cnt[row + n] || 0;
+        s += `<i class="s ${HOLD.includes(floor + row + n) ? "hold" : "lv" + Math.min(k, 5)}" style="grid-column:${c + n - a + 1}" title="${floor} ${row}${n} · ${k}회"></i>`;
+      }
+      return s;
+    }).join("");
+    return `<div class="hrow"><span class="rl">${row}</span><div class="hcells">${cells}</div></div>`;
+  }).join("");
+  return `<h4>${floor}</h4>${floor === "1층" ? `<div class="stage">STAGE</div>` : ""}${rows}`;
+}
+
+const tbl = (head, rows) => `<table class="tb"><thead><tr>${head.map(x => `<th>${x}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+const allCasts = () => Object.values(SCHEDULE).flatMap(d => Object.values(d));
+
+function renderStats() {
+  const S = allCasts(), hide = meta.settings.hide;
+  let h = `<h3>배우별 관람 횟수</h3>`;
+  Object.keys(ROLES).forEach(role => {
+    h += `<h4>${role}</h4>` + tbl(["배우", "총 회차", "관람"], ROLES[role].map(nm =>
+      [esc(nm), S.filter(c => c[role] === nm).length, records.filter(r => r.cast[role] === nm).length]));
+  });
+  const [o1, o2] = Object.keys(ROLES).filter(r => r !== pairBase);
+  h += `<h3>페어 조합별</h3><div class="flt"><span class="meta" style="margin-right:6px">기준</span>${Object.keys(ROLES).map(r =>
+      `<button type="button" class="fb ${r === pairBase ? "on" : ""}" data-base="${r}">${r}</button>`).join("")}</div>` +
+    tbl([pairBase, o1, o2, "총 회차", "관람"], ROLES[pairBase].flatMap(a => ROLES[o1].flatMap(x => ROLES[o2].flatMap(y => {
+      const fx = [[pairBase, a], [o1, x], [o2, y]].filter(([r, n]) => FIXED[r] === n).length;
+      if (fx !== 0 && fx !== 3) return [];
+      return [[esc(a), esc(x), esc(y),
+        S.filter(c => c[pairBase] === a && c[o1] === x && c[o2] === y).length,
+        records.filter(r => r.cast[pairBase] === a && r.cast[o1] === x && r.cast[o2] === y).length]];
+    }))));
+
+  h += `<h3>좌석 히트맵</h3><div class="legend">${[0, 1, 2, 3, 4, 5].map(i =>
+    `<span><i class="s lv${i}"></i>${i === 5 ? "5회+" : i + "회"}</span>`).join("")}</div>` + heatmap("1층") + heatmap("2층");
+
+  const priced = records.filter(r => r.price != null), total = priced.reduce((s, r) => s + r.price, 0);
+  const rated = records.filter(r => r.rating), row = (l, v) => `<div class="srow"><span>${l}</span><b>${v}</b></div>`;
+  const mon = {};
+  priced.forEach(r => { const k = r.date.slice(0, 7); mon[k] = (mon[k] || 0) + r.price; });
+  const mk = Object.keys(mon).sort(), mm = Math.max(...mk.map(k => mon[k]), 0);
+  h += `<div class="sp-h"><h3>지출 현황</h3><button type="button" class="fb" data-hide="1">${hide ? "👁 보기" : "다시 숨기기"}</button></div>
+    <div class="${hide ? "blur" : ""}">${row("총 지출", won(total))}${row("평균 티켓가", priced.length ? won(Math.round(total / priced.length)) : "-")}
+    ${row("유료 관람 횟수", priced.length + "회")}${row("평균 별점", rated.length ? "★ " + (rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(1) : "-")}
+    <h4>월별 지출</h4>${mk.length ? mk.map(k => bar(k.replace("-", "년 ") + "월", mon[k], mm, "var(--j)", won(mon[k]))).join("") : `<p class="note">가격을 입력하면 월별 지출이 보여요.</p>`}</div>`;
+  $("statsBox").innerHTML = h;
+}
+$("statsBox").onclick = e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.base) pairBase = b.dataset.base;
+  if (b.dataset.hide) { meta.settings.hide = !meta.settings.hide; saveMeta(); }
+  renderStats();
+};
+
+/* ===== 9. 3단계: 저장소(쿠폰·도장판·설정) ===== */
+const MKEY = "v-ever-after-diary-meta";
+let mfb = null;
+const DEF = () => ({ coupons: [], boards: [], settings: { theme: "auto", hide: true } });
+let meta = (() => { let m; try { m = JSON.parse(localStorage.getItem(MKEY)); } catch (e) { m = mfb; } return fixMeta(m); })();
+function fixMeta(m) { const d = DEF(); m = m || {};
+  (m.coupons || []).forEach(c => { if (String(c.memo || "").startsWith("쿠폰팩 · MD")) { c.kind = "MD 50% 할인권"; c.memo = "쿠폰팩"; } }); return { coupons: m.coupons || [], boards: m.boards || [], settings: Object.assign(d.settings, m.settings) }; }
+const saveMeta = () => { try { localStorage.setItem(MKEY, JSON.stringify(meta)); } catch (e) { mfb = meta; } };
+const done = () => { saveMeta(); render(); };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const today = () => `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+const fld = (l, h) => `<label>${l}</label>${h}`;
+const qtySel = id => `<select id="${id}"><option>1</option><option>2</option><option>3</option></select>`;
+const dateIn = id => `<input type="date" id="${id}" value="${today()}" required>`;
+
+/* 다크모드 */
+const mq = matchMedia("(prefers-color-scheme: dark)");
+function applyTheme() {
+  const t = meta.settings.theme, dark = t === "auto" ? mq.matches : t === "dark";
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  $("tc").content = dark ? "#12152b" : "#f3f1f8";
+}
+mq.onchange = applyTheme;
+
+/* ===== 10. 쿠폰·도장판 ===== */
+const COUPONS = ["40% 할인권", "50% 할인권", "증빙패스", "더블 적립권"];
+const PACK = [["더블 적립권", "더블 적립권"], ["증빙패스", "증빙패스"], ["40% 할인권", "40% 할인권"], ["MD 50% 할인권", "MD 50% 할인권"]]; // 쿠폰팩 1세트 구성 (공연 정보에 맞게 고쳐 쓰세요)
+const BENEFITS = [[3, "40% 할인권 2장"], [5, "폴라로이드 1매 (당일 캐스트 중 지정)"], [7, "미니 2026 CAST RECORDING (실황.VER) + 미니 포토북 + 50% 할인권 1장"]];
+const stampN = b => b.stamps.reduce((s, x) => s + x.qty, 0);
+const bal = k => meta.coupons.filter(c => c.kind === k).reduce((s, c) => s + (c.type === "사용" ? -c.qty : c.qty), 0);
+
+let d2ok = null;
+function ask(title, body, ok) {
+  $("d2t").textContent = title; $("d2b").innerHTML = body; d2ok = ok; $("d2s").hidden = !ok;
+  if (!$("dlg2").open) $("dlg2").showModal();
+}
+$("f2").onsubmit = e => { e.preventDefault(); if (d2ok && d2ok() !== false) $("dlg2").close(); };
+$("d2c").onclick = () => $("dlg2").close();
+
+function renderCoupon() {
+  const boards = meta.boards.map(b => {
+    const n = stampN(b);
+    const cells = Array.from({ length: 7 }, (_, i) => { const ms = BENEFITS.some(x => x[0] === i + 1);
+      return `<i class="st ${i < n ? "on" : ""} ${ms ? "ms" : ""}">${ms ? i + 1 : ""}</i>`; }).join("");
+    const got = BENEFITS.filter(x => n >= x[0]).map(x => x[0] + "회차").join("·");
+    return `<div class="card nb"><div class="when">${esc(b.name)} <span class="meta">${n}칸${got ? " · " + got + " 혜택 달성" : ""}</span></div>
+      <div class="stamps">${cells}</div>
+      <div class="btnrow"><button type="button" class="sm" data-a="stamp" data-b="${b.id}">도장 찍기</button>
+      <button type="button" class="sm" data-a="hist" data-b="${b.id}">이력</button>
+      <button type="button" class="sm" data-a="delb" data-b="${b.id}">삭제</button></div></div>`;
+  }).join("") || `<div class="empty">도장판이 없어요.<br>새 도장판을 만들어 관람을 적립해 보세요.</div>`;
+  const led = [...meta.coupons].sort((a, b) => (b.date + b.id).localeCompare(a.date + a.id)).map(c =>
+    `<div class="led"><span>${c.date.slice(5).replace("-", "/")} · ${esc(c.kind)} ${c.type} ${c.qty}장${c.memo ? " · " + esc(c.memo) : ""}</span>
+    <button type="button" class="sm" data-a="cdel" data-id="${c.id}" aria-label="기록 삭제">✕</button></div>`).join("");
+  $("couponBox").innerHTML = `<h3>쿠폰 현황</h3><div class="kpis">${COUPONS.map(k => `<div class="kpi"><small>${k}</small><b>${bal(k)}장</b></div>`).join("")}</div>
+    <div class="btnrow" style="margin-top:10px"><button type="button" class="sm" data-a="pack">🎁 쿠폰팩 추가</button><button type="button" class="sm" data-a="adj">+ 쿠폰 추가/차감</button></div>
+    <details><summary>쿠폰 상세 기록 (${meta.coupons.length})</summary>${led || `<p class="note">아직 기록이 없어요.</p>`}</details>
+    <div class="sp-h"><h3>다관람 카드</h3><button type="button" class="sm" data-a="nb">+ 도장판</button></div>${boards}
+    <h3>다관람 혜택</h3><div class="card nb">${BENEFITS.map(([n, t]) => `<div class="bn"><b>${n}회차</b><span>${t}</span></div>`).join("")}</div>`;
+}
+
+$("couponBox").onclick = e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const a = b.dataset.a, id = b.dataset.b;
+  if (a === "adj") ask("쿠폰 추가/차감", fld("종류", `<select id="ck">${COUPONS.map(k => `<option>${k}</option>`).join("")}</select>`) +
+    fld("유형", `<select id="ct"><option>획득</option><option>사용</option><option>복원</option></select>`) + fld("수량", qtySel("cq")) +
+    fld("날짜", dateIn("cd")) + fld("메모 (선택)", `<input id="cm" maxlength="40">`), () => {
+      meta.coupons.push({ id: uid(), kind: $("ck").value, type: $("ct").value, qty: +$("cq").value, date: $("cd").value, memo: $("cm").value.trim() }); done(); });
+  else if (a === "pack") ask("쿠폰팩 1세트 추가", `<p class="meta">${PACK.map(x => x[0]).join(" · ")} 각 1장씩 들어와요.</p>` + fld("획득 날짜", dateIn("cd")), () => {
+    PACK.forEach(([nm, k]) => meta.coupons.push({ id: uid(), kind: k, type: "획득", qty: 1, date: $("cd").value, memo: "쿠폰팩" })); done(); });
+  else if (a === "nb") ask("새 도장판", fld("이름 (비워두면 번호 자동)", `<input id="bn" maxlength="20">`), () => {
+    meta.boards.push({ id: uid(), name: $("bn").value.trim() || `도장판 ${meta.boards.length + 1}`, stamps: [] }); done(); });
+  else if (a === "stamp") { const bd = meta.boards.find(x => x.id === id);
+    ask(bd.name + " · 도장 찍기", fld("날짜", dateIn("sd")) + fld("적립 방식", `<select id="sh"><option>직접 관람</option><option>적립권 사용</option><option>교환</option><option>나눔</option></select>`) +
+      fld("도장 수량", qtySel("sq")) + fld("메모 (선택)", `<input id="sm" maxlength="40">`), () => {
+      bd.stamps.push({ id: uid(), date: $("sd").value, how: $("sh").value, qty: +$("sq").value, memo: $("sm").value.trim() });
+      if ($("sh").value === "적립권 사용") meta.coupons.push({ id: uid(), kind: "더블 적립권", type: "사용", qty: 1, date: $("sd").value, memo: "도장 적립" });
+      done(); }); }
+  else if (a === "hist") histForm(id);
+  else if (a === "delb") { if (confirm("이 도장판을 삭제할까요?")) { meta.boards = meta.boards.filter(x => x.id !== id); done(); } }
+  else if (a === "cdel") { meta.coupons = meta.coupons.filter(c => c.id !== b.dataset.id); done(); }
+};
+function histForm(id) {
+  const bd = meta.boards.find(x => x.id === id);
+  ask(bd.name + " · 이력", bd.stamps.length ? [...bd.stamps].sort((a, b) => b.date.localeCompare(a.date)).map(s =>
+    `<div class="led"><span>${s.date.slice(5).replace("-", "/")} · ${s.how} ${s.qty}칸${s.memo ? " · " + esc(s.memo) : ""}</span>
+    <button type="button" class="sm" data-sdel="${s.id}" data-b="${id}" aria-label="도장 삭제">✕</button></div>`).join("") : `<p class="note">아직 찍은 도장이 없어요.</p>`, null);
+}
+$("d2b").onclick = e => {
+  const b = e.target.closest("[data-sdel]");
+  if (!b) return;
+  const bd = meta.boards.find(x => x.id === b.dataset.b);
+  bd.stamps = bd.stamps.filter(s => s.id !== b.dataset.sdel); saveMeta(); render(); histForm(bd.id);
+};
+
+/* 기록과 도장 연동: 기록을 저장하면 고른 도장판에 1칸이 찍혀요 */
+function unstamp(id) { meta.boards.forEach(b => { b.stamps = b.stamps.filter(s => s.rec !== id); }); }
+function linkStamp(rec, bid) {
+  unstamp(rec.id);
+  const b = meta.boards.find(x => x.id === bid);
+  if (b) b.stamps.push({ id: uid(), date: rec.date, how: "직접 관람", qty: 1, memo: "", rec: rec.id });
+  saveMeta();
+}
+$("board").onchange = () => { $("newBoard").hidden = $("board").value !== "__new"; };
+function boardId() {
+  let v = $("board").value;
+  if (v === "__new") {
+    const b = { id: uid(), name: $("newBoard").value.trim() || `도장판 ${meta.boards.length + 1}`, stamps: [] };
+    meta.boards.push(b); v = b.id;
+  }
+  return v;
+}
+function fillBoards(rec) {
+  const cur = rec && meta.boards.find(b => b.stamps.some(s => s.rec === rec.id));
+  $("board").innerHTML = `<option value="">연동 안 함</option>` + meta.boards.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join("") + `<option value="__new">+ 새 도장판 만들기</option>`;
+  $("board").value = cur ? cur.id : "";
+  $("newBoard").value = ""; $("newBoard").hidden = true;
+}
+
+/* ===== 11. 설정: 다크모드, 백업/복원, 홈 화면 추가 ===== */
+let deferred = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; renderSettings(); });
+function renderSettings() {
+  const t = meta.settings.theme;
+  $("setBox").innerHTML = `<h3>화면 모드</h3>` + [["auto", "자동"], ["light", "라이트"], ["dark", "다크"]].map(([v, l]) =>
+      `<button type="button" class="fb ${t === v ? "on" : ""}" data-th="${v}">${l}</button>`).join("") +
+    `<h3>데이터 백업/복원</h3><p class="meta">기록·쿠폰·도장판이 한 파일에 담겨요. 브라우저 데이터를 지우기 전에 꼭 내보내 두세요.</p>
+    <div class="row" style="margin-top:10px"><button type="button" data-a="exp">JSON 내보내기</button><button type="button" data-a="imp">JSON 가져오기</button></div>
+    <h3>홈 화면에 추가</h3><p class="meta">아이폰은 공유 버튼 → "홈 화면에 추가", 안드로이드는 브라우저 메뉴 → "홈 화면에 추가"를 고르면 앱처럼 열려요.</p>
+    ${deferred ? `<button type="button" class="more" data-a="pwa">홈 화면에 추가</button>` : ""}
+    <h3>이벤트</h3><p class="meta">등록된 이벤트 ${EVENTS.length}개 · 캘린더에 색 띠로 표시돼요.</p>`;
+}
+async function exportData() {
+  const text = JSON.stringify({ app: "v-ever-after", v: 3, records, meta }, null, 1), name = `v-ever-after-backup-${today()}.json`;
+  try { // claude.ai 게시 페이지에서는 저장 확인창을 거쳐요
+    const dl = window.claude && claude.use ? await claude.use("downloads") : null;
+    if (dl) { await dl.save({ filename: name, data: text }); return; }
+  } catch (err) { if (err && err.code === "declined") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "application/json" })); a.download = name;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$("setBox").onclick = e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.th) { meta.settings.theme = b.dataset.th; saveMeta(); applyTheme(); renderSettings(); }
+  else if (b.dataset.a === "exp") exportData();
+  else if (b.dataset.a === "imp") $("imp").click();
+  else if (b.dataset.a === "pwa" && deferred) { deferred.prompt(); deferred = null; renderSettings(); }
+};
+$("imp").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.records)) throw 0;
+    if (!confirm(`기록 ${d.records.length}개를 가져와요. 지금 저장된 데이터는 덮어써져요. 계속할까요?`)) return;
+    records = d.records; meta = fixMeta(d.meta); save(); saveMeta(); applyTheme(); render();
+  } catch (err) { alert("가져올 수 없는 파일이에요. 이 앱에서 내보낸 JSON 파일인지 확인해 주세요."); }
+};
+
+/* 홈 화면 아이콘과 매니페스트는 코드로 만들어 붙여요 */
+try {
+  const c = document.createElement("canvas"); c.width = c.height = 512;
+  const g = c.getContext("2d"); g.fillStyle = "#12152b"; g.fillRect(0, 0, 512, 512);
+  g.fillStyle = "#c8456a"; g.font = "800 320px serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("V", 256, 276);
+  const ic = c.toDataURL("image/png"), l = document.createElement("link");
+  l.rel = "apple-touch-icon"; l.href = ic; document.head.append(l);
+  const m = { name: "V Ever After 관극 다이어리", short_name: "V Ever After", start_url: location.href.split("#")[0], display: "standalone",
+    background_color: "#12152b", theme_color: "#12152b", icons: [{ src: ic, sizes: "512x512", type: "image/png" }] };
+  const k = document.createElement("link"); k.rel = "manifest";
+  k.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: "application/manifest+json" })); document.head.append(k);
+} catch (e) {}
+
+applyTheme();
+render();
+</script>
+</body>
+</html>
