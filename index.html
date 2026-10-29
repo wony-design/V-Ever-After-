@@ -8,6 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="V Ever After">
 <meta name="theme-color" content="#12152b" id="tc">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -842,19 +845,6 @@ $("imp").onchange = async e => {
     records = d.records; meta = fixMeta(d.meta); save(); saveMeta(); applyTheme(); render();
   } catch (err) { alert("가져올 수 없는 파일이에요. 이 앱에서 내보낸 JSON 파일인지 확인해 주세요."); }
 };
-
-/* 홈 화면 아이콘과 매니페스트는 코드로 만들어 붙여요 */
-try {
-  const c = document.createElement("canvas"); c.width = c.height = 512;
-  const g = c.getContext("2d"); g.fillStyle = "#12152b"; g.fillRect(0, 0, 512, 512);
-  g.fillStyle = "#c8456a"; g.font = "800 320px serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("V", 256, 276);
-  const ic = c.toDataURL("image/png"), l = document.createElement("link");
-  l.rel = "apple-touch-icon"; l.href = ic; document.head.append(l);
-  const m = { name: "V Ever After 관극 다이어리", short_name: "V Ever After", start_url: location.href.split("#")[0], display: "standalone",
-    background_color: "#12152b", theme_color: "#12152b", icons: [{ src: ic, sizes: "512x512", type: "image/png" }] };
-  const k = document.createElement("link"); k.rel = "manifest";
-  k.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: "application/manifest+json" })); document.head.append(k);
-} catch (e) {}
 
 applyTheme();
 render();
