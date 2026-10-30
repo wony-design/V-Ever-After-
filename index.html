@@ -188,6 +188,29 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
 input[type=date]::-webkit-date-and-time-value{text-align:left;min-height:0;height:24px;line-height:24px;margin:0}
 input[type=date]::-webkit-datetime-edit{padding:0}
 h3,dialog h2,.when{font-weight:var(--fw,700);letter-spacing:var(--fls,0)}
+/* ===== 7. 캘린더를 한 화면에 (모바일) ===== */
+/* 배우 선택: 접지 않고 항상 보여요. 한 줄에 한 역할씩, 작게 */
+#calFilter{margin-bottom:2px}
+#calFilter .flt{flex-wrap:nowrap;gap:0;margin:0 0 3px}
+#calFilter .flt .chip{flex:0 0 auto;width:60px;font-size:12px;padding:1px 0;margin-right:6px}
+#calFilter .fb{flex:0 0 auto;width:58px;padding:3px 0;font-size:12.5px;margin:0 4px 0 0;white-space:nowrap}
+#calFilter .fb:last-child{margin-right:0}
+.cal-head{margin:8px 0 4px}.cal-head button{height:32px}
+.grid7{gap:1px 3px}
+.day{min-height:52px;padding:2px 1px;gap:0}
+.wrap{padding-top:14px}
+.sub{margin:0 0 6px}
+.hd h1{font-size:26px}
+.cal-head b{font-size:16px}
+.dow{line-height:1.4}
+.tm{line-height:1.15}
+.eb{height:13px;line-height:13px}
+#calDetail h3{margin:6px 0 4px;font-size:15px}
+.sess{padding:6px 10px;margin-bottom:4px}
+.sess .chips{margin-top:3px;gap:4px}
+.sess .chip{font-size:12px;padding:1px 7px}
+.sess .meta{margin:0}
+#calDetail .more{padding:5px;font-size:13px;margin-top:0}
 </style>
 </head>
 <body>
@@ -610,7 +633,7 @@ function renderCal() {
     <div class="flt"><span class="chip ${ROLE_CLASS[role]}">${role}</span>
       ${["", ...ROLES[role]].map(n =>
         `<button type="button" class="fb ${filt[role] === n ? "on" : ""}" data-role="${role}" data-name="${n}">${n || "전체"}</button>`).join("")}
-    </div>`).join("") + `<p class="meta">${filtOn() ? "고른 배우가 나오는 회차만 보여요" : "전체 회차 표시 중"}</p>`;
+    </div>`).join("");
   $("calTitle").textContent = `${calY}년 ${calM + 1}월`;
   const first = new Date(calY, calM, 1).getDay(), last = new Date(calY, calM + 1, 0).getDate();
   const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
@@ -881,7 +904,7 @@ function fillBoards(rec) {
 let deferred = null;
 addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; renderSettings(); });
 /* 최근 업데이트 날짜: 수정할 때마다 이 날짜가 바뀌어요 */
-const APP_UPDATED = "2026.10.29";
+const APP_UPDATED = "2026.10.30";
 function renderSettings() {
   const t = meta.settings.theme;
   $("setBox").innerHTML = `<h3>화면 모드</h3>` + [["auto", "자동"], ["light", "라이트"], ["dark", "다크"]].map(([v, l]) =>
