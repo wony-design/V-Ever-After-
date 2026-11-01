@@ -189,28 +189,21 @@ input[type=date]::-webkit-date-and-time-value{text-align:left;min-height:0;heigh
 input[type=date]::-webkit-datetime-edit{padding:0}
 h3,dialog h2,.when{font-weight:var(--fw,700);letter-spacing:var(--fls,0)}
 /* ===== 7. 캘린더를 한 화면에 (모바일) ===== */
-/* 배우 선택: 접지 않고 항상 보여요. 한 줄에 한 역할씩, 작게 */
-#calFilter{margin-bottom:2px}
-#calFilter .flt{flex-wrap:nowrap;gap:0;margin:0 0 3px}
-#calFilter .flt .chip{flex:0 0 auto;width:60px;font-size:12px;padding:1px 0;margin-right:6px}
-#calFilter .fb{flex:0 0 auto;width:58px;padding:3px 0;font-size:12.5px;margin:0 4px 0 0;white-space:nowrap}
-#calFilter .fb:last-child{margin-right:0}
+.fdet summary{margin:0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;list-style:none;font-size:14px;color:var(--silver);
+  padding:7px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.fdet summary::-webkit-details-marker{display:none}
+.fdet summary span{color:var(--dim);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fdet[open] summary{margin-bottom:8px}
+.fdet .fb{padding:3px 9px;font-size:12.5px;margin:0 3px 3px 0}
+.fdet .flt .chip{min-width:56px;font-size:12px;padding:2px 8px}
 .cal-head{margin:8px 0 4px}.cal-head button{height:32px}
 .grid7{gap:1px 3px}
-.day{min-height:52px;padding:2px 1px;gap:0}
-.wrap{padding-top:14px}
-.sub{margin:0 0 6px}
-.hd h1{font-size:26px}
-.cal-head b{font-size:16px}
-.dow{line-height:1.4}
+.day{min-height:48px;padding:3px 1px;gap:1px}
 .tm{line-height:1.15}
 .eb{height:13px;line-height:13px}
-#calDetail h3{margin:6px 0 4px;font-size:15px}
-.sess{padding:6px 10px;margin-bottom:4px}
-.sess .chips{margin-top:3px;gap:4px}
-.sess .chip{font-size:12px;padding:1px 7px}
-.sess .meta{margin:0}
-#calDetail .more{padding:5px;font-size:13px;margin-top:0}
+#calDetail h3{margin:10px 0 6px;font-size:16px}
+.sess{padding:8px 12px;margin-bottom:6px}
+#calDetail .more{padding:8px;font-size:14px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -617,6 +610,7 @@ const EVENTS = [
   // 이벤트는 여기에 한 줄씩 추가해요. 예)
   { title: "프리뷰", start: "2026-10-21", end: "2026-10-25", color: "#a8d5a2" },
   { title: "쿠폰팩 증정", start: "2026-10-27", end: "2026-11-01", color: "#c9a8e0" },
+  { title: "포토카드 증정", start: "2026-11-03", end: "2026-11-08", color: "#ffcc99" },
 ];
 // 기간이 겹치지 않는 이벤트는 같은 줄(위쪽)에 놓고, 겹칠 때만 아래 줄로 내려요
 const LANES = [];
@@ -628,12 +622,16 @@ EVENTS.forEach((e, i) => {
 });
 const evOn = d => EVENTS.map((e, i) => ({ ...e, i: LANES[i] })).filter(e => d >= e.start && d <= (e.end || e.start));
 
+let filtOpen = false; // 배우 선택 창은 평소엔 접어 두고, 누르면 펼쳐져요
+$("calFilter").addEventListener("toggle", e => { filtOpen = e.target.open; }, true);
 function renderCal() {
-  $("calFilter").innerHTML = Object.keys(ROLES).map(role => `
+  const sel = Object.keys(ROLES).filter(r => filt[r]).map(r => filt[r]).join(", ");
+  $("calFilter").innerHTML = `<details class="fdet" ${filtOpen ? "open" : ""}><summary>🎭 배우 선택 <span>${sel ? esc(sel) : "전체 회차 표시 중"}</span></summary>` +
+    Object.keys(ROLES).map(role => `
     <div class="flt"><span class="chip ${ROLE_CLASS[role]}">${role}</span>
       ${["", ...ROLES[role]].map(n =>
         `<button type="button" class="fb ${filt[role] === n ? "on" : ""}" data-role="${role}" data-name="${n}">${n || "전체"}</button>`).join("")}
-    </div>`).join("");
+    </div>`).join("") + `</details>`;
   $("calTitle").textContent = `${calY}년 ${calM + 1}월`;
   const first = new Date(calY, calM, 1).getDay(), last = new Date(calY, calM + 1, 0).getDate();
   const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
