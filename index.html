@@ -211,6 +211,7 @@ h3,dialog h2,.when{font-weight:var(--fw,700);letter-spacing:var(--fls,0)}
 .sess .chip{font-size:12px;padding:1px 7px}
 .sess .meta{margin:0}
 #calDetail .more{padding:5px;font-size:13px;margin-top:0}
+.song{font-size:13px;font-weight:400;color:var(--dim);margin:0 6px}
 </style>
 </head>
 <body>
@@ -618,6 +619,7 @@ const EVENTS = [
   { title: "프리뷰", start: "2026-10-21", end: "2026-10-25", color: "#a8d5a2" },
   { title: "쿠폰팩 증정", start: "2026-10-27", end: "2026-11-01", color: "#c9a8e0" },
   { title: "포토카드 증정", start: "2026-11-03", end: "2026-11-08", color: "#ffcc99" },
+  { title: "스페셜 커튼콜", start: "2026-11-10", end: "2026-11-15", color: "#f4a6b8" },
 ];
 // 기간이 겹치지 않는 이벤트는 같은 줄(위쪽)에 놓고, 겹칠 때만 아래 줄로 내려요
 const LANES = [];
@@ -660,6 +662,12 @@ function renderCal() {
   renderDetail();
 }
 
+/* 스페셜 커튼콜 곡 (회차 날짜+시간 → 곡 제목) */
+const CURTAIN = {
+  "2026-11-12 16:00": "신이세요", "2026-11-15 18:00": "신이세요",
+  "2026-11-10 20:00": "노래 중의 노래", "2026-11-11 20:00": "노래 중의 노래", "2026-11-14 15:00": "노래 중의 노래", "2026-11-15 14:00": "노래 중의 노래",
+  "2026-11-12 20:00": "그랬잖아", "2026-11-13 20:00": "그랬잖아", "2026-11-14 19:00": "그랬잖아",
+};
 function renderDetail() {
   if (!selDay) { $("calDetail").innerHTML = `<p class="count">날짜를 누르면 그날의 회차와 이벤트가 보여요. <span style="color:var(--ok)">✓</span> 기록한 회차</p>`; return; }
   const evs = evOn(selDay).map(e => `<div class="sess" style="border-left:4px solid ${e.color || "var(--rose)"}"><div><b>${esc(e.title)}</b>
@@ -667,7 +675,7 @@ function renderDetail() {
   const rows = dayTimes(selDay).filter(t => !filtOn() || matches(castOf(selDay, t))).map(t => {
     const rec = records.find(r => r.date === selDay && r.time === t);
     const cast = castOf(selDay, t);
-    return `<div class="sess"><div><b>${t}</b>${rec ? ` <span class="seen" ${rec.tbd ? 'style="color:var(--dim)"' : ""}>${rec.tbd ? "예매 미확정" : "✓ 예매확정"}</span>` : ""}
+    return `<div class="sess"><div><b>${t}</b>${CURTAIN[selDay + " " + t] ? `<span class="song">(${CURTAIN[selDay + " " + t]})</span>` : ""}${rec ? ` <span class="seen" ${rec.tbd ? 'style="color:var(--dim)"' : ""}>${rec.tbd ? "예매 미확정" : "✓ 예매확정"}</span>` : ""}
       <div class="chips">${Object.keys(ROLES).map(role => `<span class="chip ${ROLE_CLASS[role]}">${role} ${esc(cast[role])}</span>`).join("")}</div></div>
       <button type="button" data-time="${t}" data-id="${rec ? rec.id : ""}">${rec ? "수정" : "기록"}</button></div>`;
   }).join("");
@@ -905,7 +913,7 @@ function fillBoards(rec) {
 let deferred = null;
 addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; renderSettings(); });
 /* 최근 업데이트 날짜: 수정할 때마다 이 날짜가 바뀌어요 */
-const APP_UPDATED = "2026.10.30";
+const APP_UPDATED = "2026.11.08";
 function renderSettings() {
   const t = meta.settings.theme;
   $("setBox").innerHTML = `<h3>화면 모드</h3>` + [["auto", "자동"], ["light", "라이트"], ["dark", "다크"]].map(([v, l]) =>
